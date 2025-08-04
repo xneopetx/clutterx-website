@@ -83,9 +83,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Bring to front utility - Updated to use CSS custom properties
     bringToFront = function(win) {
-        const floats = document.querySelectorAll('.floating-window');
-        const baseZ = getComputedStyle(document.documentElement).getPropertyValue('--z-window-base').trim();
-        const activeZ = getComputedStyle(document.documentElement).getPropertyValue('--z-window-active').trim();
+        const floats = document.querySelectorAll('.floating-window, #chat-window, #ipod-window, .vista-window');
+        const baseZ = 1001;
+        const activeZ = 1002;
         
         floats.forEach(w => {
             w.style.zIndex = baseZ;
@@ -94,6 +94,9 @@ document.addEventListener('DOMContentLoaded', function() {
         win.style.zIndex = activeZ;
         win.classList.add('active');
     };
+    
+    // Make bringToFront globally available for window physics
+    window.bringToFront = bringToFront;
 
     // Center window utility
     centerWindow = function(win) {

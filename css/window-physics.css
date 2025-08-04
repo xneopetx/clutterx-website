@@ -1,0 +1,129 @@
+/* window-physics.css - Styling for advanced window physics */
+
+.physics-enabled {
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  user-select: none;
+}
+
+.physics-enabled .window-title-bar {
+  cursor: grab;
+  user-select: none;
+}
+
+.physics-enabled .window-title-bar:active {
+  cursor: grabbing;
+}
+
+.physics-enabled.moving {
+  transition: none; /* Disable transitions while dragging */
+  z-index: 9998 !important;
+}
+
+/* Detached window styling */
+.physics-enabled.detached {
+  box-shadow: 0 15px 35px rgba(0, 255, 136, 0.4), 
+              0 5px 15px rgba(0, 0, 0, 0.3);
+  border: 2px solid #00ff88;
+  transform: scale(1.02);
+  z-index: 9999 !important;
+}
+
+.physics-enabled.detached .window-title-bar {
+  background: linear-gradient(90deg, #00ff88, #0088ff) !important;
+  animation: detached-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes detached-glow {
+  0% { 
+    background: linear-gradient(90deg, #00ff88, #0088ff) !important;
+  }
+  100% { 
+    background: linear-gradient(90deg, #0088ff, #00ff88) !important;
+  }
+}
+
+/* Shake animation for detach feedback */
+@keyframes shake {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  25% { transform: translateX(-4px) translateY(-3px); }
+  50% { transform: translateX(4px) translateY(3px); }
+  75% { transform: translateX(-3px) translateY(-4px); }
+}
+
+.physics-enabled.shaking {
+  animation: shake 0.15s ease-in-out;
+}
+
+/* Reattach slam effect */
+@keyframes slam-attach {
+  0% { transform: scale(1.1) rotateZ(1deg); }
+  50% { transform: scale(0.95) rotateZ(-1deg); }
+  100% { transform: scale(1) rotateZ(0deg); }
+}
+
+.physics-enabled.reattaching {
+  animation: slam-attach 0.3s ease-out;
+}
+
+/* Hover effects for title bars */
+.physics-enabled .window-title-bar:hover {
+  background: linear-gradient(90deg, #e0e0e0, #f0f0f0);
+  transition: background 0.2s ease;
+}
+
+.physics-enabled.detached .window-title-bar:hover {
+  background: linear-gradient(90deg, #00ff88, #0088ff) !important;
+}
+
+/* Smooth transitions for window movement */
+.physics-enabled:not(.moving) {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Special styling for chat and music windows */
+#chat-window.physics-enabled.detached {
+  border-color: #ff6b6b;
+  box-shadow: 0 15px 35px rgba(255, 107, 107, 0.4), 
+              0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+#ipod-window.physics-enabled.detached {
+  border-color: #4ecdc4;
+  box-shadow: 0 15px 35px rgba(78, 205, 196, 0.4), 
+              0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Notification styling */
+.physics-notification {
+  font-family: 'Michroma', monospace;
+  font-size: 11px;
+  font-weight: bold;
+  text-shadow: 1px 1px 0px rgba(0,0,0,0.5);
+  border: 1px solid rgba(0, 255, 136, 0.6);
+  backdrop-filter: blur(5px);
+}
+
+/* Taskbar button indicators for detached windows */
+.taskbar-button.app-detached {
+  background: linear-gradient(45deg, #ff6b6b, #ffa500) !important;
+  animation: pulse-detached 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-detached {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .physics-enabled.detached {
+    transform: scale(1.01);
+  }
+  
+  .physics-notification {
+    font-size: 10px;
+    padding: 8px 12px;
+    right: 10px;
+    top: 10px;
+  }
+}
