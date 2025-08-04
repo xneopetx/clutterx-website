@@ -108,6 +108,8 @@ class WindowPhysics {
       // Check for upward stretch when attached
       const upwardDistance = this.stretchStartY - e.clientY;
       
+      console.log(`🎯 Drag check: upwardDistance=${upwardDistance.toFixed(0)}, isDetached=${this.isDetached}, isStretching=${this.isStretching}`);
+      
       if (upwardDistance > 10) {
         // Started stretching upward
         this.isStretching = true;
@@ -116,7 +118,7 @@ class WindowPhysics {
         // Add visual class for stretching
         this.window.classList.add('stretching');
         
-        console.log(`🔥 Stretching: ${this.stretchAmount.toFixed(0)}px / ${this.snapThreshold}px`);
+        console.log(`🔥 STRETCHING ACTIVE: ${this.stretchAmount.toFixed(0)}px / ${this.snapThreshold}px`);
         
         // Apply stretch visual effect
         this.applyStretchEffect();
@@ -185,6 +187,8 @@ class WindowPhysics {
   }
 
   applyStretchEffect() {
+    console.log(`🔥 APPLYING STRETCH EFFECT - amount: ${this.stretchAmount}, maxStretch: ${this.maxStretch}`);
+    
     const stretchPercent = this.stretchAmount / this.maxStretch;
     
     // Make it LONG and THIN - dramatic stretching
@@ -201,12 +205,17 @@ class WindowPhysics {
     const pulse = Math.sin(Date.now() * 0.03) * 0.2 + 1;
     const finalScaleY = scaleY * pulse;
     
-    console.log(`🔥 STRETCH EFFECT: scaleY=${finalScaleY.toFixed(2)}, scaleX=${scaleX.toFixed(2)}, amount=${this.stretchAmount}`);
+    console.log(`🎨 TRANSFORM VALUES: scaleY=${finalScaleY.toFixed(2)}, scaleX=${scaleX.toFixed(2)}, translateY=${translateY.toFixed(0)}, skew=${skewX.toFixed(1)}`);
     
-    // Set transform origin to bottom for proper stretching
+    // Force transform origin and make sure transform is applied
     this.window.style.transformOrigin = 'center bottom';
-    this.window.style.transform = `${this.originalTransform} translateY(${translateY}px) scaleY(${finalScaleY}) scaleX(${scaleX}) skewX(${skewX}deg)`;
+    this.window.style.transition = 'none'; // Disable any transitions that might interfere
+    const transformString = `${this.originalTransform} translateY(${translateY}px) scaleY(${finalScaleY}) scaleX(${scaleX}) skewX(${skewX}deg)`;
+    this.window.style.transform = transformString;
     this.window.style.filter = `hue-rotate(${120 - hue}deg) brightness(${1 + intensity * 1.2}) saturate(${1 + intensity * 3}) drop-shadow(0 0 ${intensity * 30}px rgba(255, ${100 * intensity}, 0, 0.9))`;
+    
+    console.log(`🎨 APPLIED TRANSFORM: "${transformString}"`);
+    console.log(`🎨 WINDOW ELEMENT:`, this.window);
     
     // Add visual indicator when close to snap threshold
     if (this.stretchAmount >= this.snapThreshold * 0.7) {
@@ -414,8 +423,15 @@ class WindowPhysics {
     
     this.stopPhysics();
     this.isDetached = false;
+    
+    // Reset gravity state when reattaching
+    this.gravityEnabled = false;
+    this.acceleration.y = 0;
+    console.log('🌍 Gravity RESET - disabled for reattached window');
+    
     this.window.classList.remove('detached', 'ready-to-detach');
     this.window.style.zIndex = '';
+    this.window.style.boxShadow = ''; // Remove gravity glow
     
     // Snap to taskbar with animation
     this.window.style.transition = 'transform 0.2s ease, bottom 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
@@ -429,7 +445,7 @@ class WindowPhysics {
     }, 400);
     
     this.resetStretchEffect();
-    this.showNotification('Window reattached to taskbar!');
+    this.showNotification('Window reattached! Gravity reset - double-click to enable again');
     
     this.window.dispatchEvent(new CustomEvent('windowReattached', {
       detail: { windowId: this.window.id }
@@ -475,12 +491,16 @@ function initializeWindowPhysics() {
   
   setTimeout(() => {
     const windows = document.querySelectorAll('#chat-window, #ipod-window, .vista-window');
-    console.log('Found windows:', windows.length);
+    console.log('🔍 Found windows:', windows.length);
+    console.log('🔍 Window elements:', windows);
     
     windows.forEach((window) => {
+      console.log(`🔍 Checking window: ${window.id || 'no-id'}, has physics: ${!!window.windowPhysics}`);
       if (!window.windowPhysics) {
-        console.log('✅ Initializing stretch physics for:', window.id);
+        console.log('✅ Initializing stretch physics for:', window.id || 'unnamed-window');
         window.windowPhysics = new WindowPhysics(window);
+      } else {
+        console.log('⚠️ Window already has physics:', window.id);
       }
     });
   }, 100);
@@ -516,6 +536,25 @@ window.debugWindowPhysics = function() {
   if (ipodWindow && !ipodWindow.windowPhysics) {
     console.log('🚀 Manually initializing iPod window stretch physics');
     ipodWindow.windowPhysics = new WindowPhysics(ipodWindow);
+  }
+};
+
+// Test stretch effect directly
+window.testStretch = function() {
+  console.log('🧪 Testing stretch effect...');
+  const chatWindow = document.getElementById('chat-window');
+  if (chatWindow && chatWindow.windowPhysics) {
+    const physics = chatWindow.windowPhysics;
+    physics.stretchAmount = 40; // Simulate stretch
+    physics.applyStretchEffect();
+    console.log('🧪 Applied test stretch to chat window');
+    
+    setTimeout(() => {
+      physics.resetStretchEffect();
+      console.log('🧪 Reset stretch effect');
+    }, 3000);
+  } else {
+    console.log('❌ Chat window or physics not found');
   }
 };
 
