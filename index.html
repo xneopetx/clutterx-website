@@ -8,7 +8,6 @@
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/chat.css">
   <link rel="stylesheet" href="css/music-player.css">
-  <link rel="stylesheet" href="css/window-physics.css">
 </head>
 <body>
   <!-- Header -->
@@ -313,15 +312,13 @@
   </div>
 
   <!-- Your JS modules -->
-  <script type="module" src="js/sparkles.js"></script>
+  <script type="module" src="sparkles.js"></script>
 
-  <script type="module" src="js/chat.js"></script>
-  <script type="module" src="js/taskbar.js"></script>
-  <script type="module" src="js/music-player.js"></script>
-  <!-- Window physics system -->
-  <script src="js/window-physics.js"></script>
+  <script type="module" src="chat.js"></script>
+  <script type="module" src="taskbar.js"></script>
+  <script type="module" src="music-player.js"></script>
   <!-- Load discord-updates.js last to ensure all dependencies are loaded -->
-  <script type="module" src="js/discord-updates.js"></script>
+  <script type="module" src="discord-updates.js"></script>
 
   <!-- Clock updater -->
   <script>
@@ -339,6 +336,6 @@
   </script>
 
   <!-- SPA loader (must be last) -->
-  <script src="js/spa.js"></script>
+  <script src="spa.js"></script>
 </body>
 </html>

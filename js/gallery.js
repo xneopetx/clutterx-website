@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
       id: 1,
       title: "Cropped Denim Top",
       // Try these paths in order until images appear:
-      image: "../images/Gallery/4-5.png",    // Option 1 (most common)
+      image: "./images/Gallery/4-5.png",    // Option 1 (most common)
       // image: "images/Gallery/4-5.png",   // Option 2
       // image: "/images/Gallery/4-5.png",  // Option 3
       // image: "Gallery/4-5.png",          // Option 4
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     {
       id: 2,
       title: "Patchwork Jeans",
-      image: "../images/Gallery/4-5.png", // Use same path as first item
+      image: "./images/Gallery/4-5.png", // Use same path as first item
       date: "04/22/2023",
       likes: 28,
       description: "Upcycled jeans with patchwork design.",

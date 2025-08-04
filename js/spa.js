@@ -3,7 +3,7 @@ async function loadPage(name, push = true) {
   const container = document.getElementById('content');
   container.innerHTML = '<p class="loading">Loading…</p>';
   try {
-    const res = await fetch(`pages/${name}.html`);
+    const res = await fetch(`${name}.html`);
     if (!res.ok) throw new Error('Not found');
     container.innerHTML = await res.text();
     

@@ -141,7 +141,7 @@ export class iPodMusicPlayer {
             artist: audio.dataset.artist || 'Unknown Artist',
             src: audio.src,
             duration: "--:--",
-            albumArt: audio.dataset.albumart || '../images/albumart/default.jpg',
+            albumArt: audio.dataset.albumart || 'images/albumart/default.jpg',
             spotifyUrl: audio.dataset.spotifyurl || ''
         }));
         
