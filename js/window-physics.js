@@ -16,8 +16,9 @@ class WindowPhysics {
     
     // Physics properties for detached windows
     this.velocity = { x: 0, y: 0 };
-    this.friction = 0.95;
-    this.bounce = 0.3;
+    this.acceleration = { x: 0, y: 0.3 }; // Add gravity
+    this.friction = 0.98; // Less friction for better feel
+    this.bounce = 0.6; // More bouncy
     this.physicsInterval = null;
     
     this.init();
@@ -88,10 +89,10 @@ class WindowPhysics {
     const deltaX = e.clientX - this.lastMouseX;
     const deltaY = e.clientY - this.lastMouseY;
     
-    // Track velocity for physics
+    // Track velocity for physics - better momentum calculation
     if (this.isDetached) {
-      this.velocity.x = deltaX * 0.8;
-      this.velocity.y = deltaY * 0.8;
+      this.velocity.x = deltaX * 1.2; // More responsive
+      this.velocity.y = deltaY * 1.2;
     }
     
     this.lastMouseX = e.clientX;
@@ -110,6 +111,9 @@ class WindowPhysics {
         this.isStretching = true;
         this.stretchAmount = Math.min(upwardDistance, this.maxStretch);
         
+        // Add visual class for stretching
+        this.window.classList.add('stretching');
+        
         console.log(`🔥 Stretching: ${this.stretchAmount.toFixed(0)}px / ${this.snapThreshold}px`);
         
         // Apply stretch visual effect
@@ -123,6 +127,7 @@ class WindowPhysics {
         // Normal horizontal movement along taskbar
         this.isStretching = false;
         this.stretchAmount = 0;
+        this.window.classList.remove('stretching');
         this.resetStretchEffect();
         
         const rect = this.window.getBoundingClientRect();
@@ -152,19 +157,23 @@ class WindowPhysics {
 
   applyStretchEffect() {
     const stretchPercent = this.stretchAmount / this.maxStretch;
-    const scaleY = 1 + (stretchPercent * 0.4); // Stretch up to 40% taller
-    const skewX = stretchPercent * -4; // Slight skew for elastic feel
-    const translateY = -this.stretchAmount * 0.6; // Move up as it stretches
+    const scaleY = 1 + (stretchPercent * 0.8); // More dramatic stretch - up to 80% taller
+    const skewX = stretchPercent * -6; // More pronounced skew
+    const translateY = -this.stretchAmount * 0.8; // Move up more as it stretches
     
-    // Color change for visual feedback
+    // Color change for visual feedback - more dramatic
     const intensity = Math.min(stretchPercent, 1);
-    const hue = 120 - (intensity * 90); // Green to red transition
+    const hue = 120 - (intensity * 120); // Green to red transition
     
-    this.window.style.transform = `${this.originalTransform} translateY(${translateY}px) scaleY(${scaleY}) skewX(${skewX}deg)`;
-    this.window.style.filter = `hue-rotate(${120 - hue}deg) brightness(${1 + intensity * 0.5}) saturate(${1 + intensity})`;
+    // Add pulsing effect when stretching
+    const pulse = Math.sin(Date.now() * 0.02) * 0.1 + 1;
+    const finalScale = scaleY * pulse;
+    
+    this.window.style.transform = `${this.originalTransform} translateY(${translateY}px) scaleY(${finalScale}) skewX(${skewX}deg)`;
+    this.window.style.filter = `hue-rotate(${120 - hue}deg) brightness(${1 + intensity * 0.8}) saturate(${1 + intensity * 2}) drop-shadow(0 0 ${intensity * 20}px rgba(255, ${100 * intensity}, 0, 0.8))`;
     
     // Add visual indicator when close to snap threshold
-    if (this.stretchAmount >= this.snapThreshold * 0.8) {
+    if (this.stretchAmount >= this.snapThreshold * 0.7) {
       this.window.classList.add('ready-to-detach');
     } else {
       this.window.classList.remove('ready-to-detach');
@@ -174,11 +183,14 @@ class WindowPhysics {
   resetStretchEffect() {
     this.window.style.transform = this.originalTransform;
     this.window.style.filter = '';
-    this.window.classList.remove('ready-to-detach');
+    this.window.classList.remove('ready-to-detach', 'stretching');
   }
 
   snapBack() {
     console.log('↩️ Snapping back to taskbar - not enough stretch');
+    
+    // Remove stretching class
+    this.window.classList.remove('stretching');
     
     // Elastic snap back animation
     this.window.style.transition = 'transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55), filter 0.3s ease';
@@ -281,6 +293,11 @@ class WindowPhysics {
     }
 
     const rect = this.window.getBoundingClientRect();
+    
+    // Apply gravity and acceleration
+    this.velocity.x += this.acceleration.x;
+    this.velocity.y += this.acceleration.y;
+    
     let newX = rect.left + this.velocity.x;
     let newY = rect.top + this.velocity.y;
 
@@ -315,16 +332,38 @@ class WindowPhysics {
     }
 
     this.moveWindowFreely(newX, newY);
+    
+    // Continuous check for reattachment during physics
+    this.checkForAutoReattach();
+  }
+  
+  checkForAutoReattach() {
+    const windowRect = this.window.getBoundingClientRect();
+    const taskbarZone = window.innerHeight - 100;
+    
+    // Auto-reattach if window settles near taskbar
+    if (windowRect.bottom >= taskbarZone) {
+      const speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+      if (speed < 2) { // Window has slowed down near taskbar
+        console.log('🔗 Auto-reattaching slow window near taskbar');
+        this.reattachWindow();
+      }
+    }
   }
 
   checkForSlamReattach(e) {
     const windowRect = this.window.getBoundingClientRect();
-    const taskbarTop = window.innerHeight - 50;
+    const taskbarZone = window.innerHeight - 120; // Larger detection zone
     
-    // Check if window is near taskbar and moving fast
+    // Check if window is near taskbar area (more generous)
     const speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+    const isNearTaskbar = windowRect.bottom >= taskbarZone;
+    const isMovingDown = this.velocity.y > 0;
     
-    if (Math.abs(windowRect.bottom - window.innerHeight) < 80 && speed > 8) {
+    console.log(`🎯 Reattach check: bottom=${windowRect.bottom.toFixed(0)}, zone=${taskbarZone}, speed=${speed.toFixed(1)}, movingDown=${isMovingDown}`);
+    
+    // Much easier reattachment conditions
+    if (isNearTaskbar && (speed > 3 || isMovingDown)) {
       this.reattachWindow();
     }
   }
@@ -449,24 +488,70 @@ style.textContent = `
   to { transform: translateX(0); opacity: 1; }
 }
 
+@keyframes stretchPulse {
+  0% { transform: scaleX(1); }
+  50% { transform: scaleX(1.05); }
+  100% { transform: scaleX(1); }
+}
+
 .physics-enabled.ready-to-detach {
-  box-shadow: 0 0 20px rgba(255, 0, 0, 0.6) !important;
-  animation: readyPulse 0.5s ease-in-out infinite alternate;
+  box-shadow: 0 0 25px rgba(255, 0, 0, 0.8) !important;
+  animation: readyPulse 0.3s ease-in-out infinite alternate, stretchPulse 0.5s ease-in-out infinite;
 }
 
 @keyframes readyPulse {
-  from { box-shadow: 0 0 20px rgba(255, 0, 0, 0.6); }
-  to { box-shadow: 0 0 30px rgba(255, 100, 0, 0.8); }
+  from { 
+    box-shadow: 0 0 25px rgba(255, 0, 0, 0.8);
+    filter: brightness(1.2) saturate(1.5);
+  }
+  to { 
+    box-shadow: 0 0 40px rgba(255, 100, 0, 1), 0 0 60px rgba(255, 200, 0, 0.5);
+    filter: brightness(1.5) saturate(2);
+  }
 }
 
 .physics-enabled.moving {
   z-index: 9998;
+  transition: none !important;
 }
 
 .physics-enabled.detached {
-  box-shadow: 0 15px 35px rgba(0, 255, 136, 0.4), 
-              0 5px 15px rgba(0, 0, 0, 0.3);
-  border: 2px solid #00ff88;
+  box-shadow: 0 20px 40px rgba(0, 255, 136, 0.6), 
+              0 10px 20px rgba(0, 0, 0, 0.4),
+              0 0 30px rgba(0, 255, 136, 0.3);
+  border: 3px solid #00ff88;
+  animation: floatGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes floatGlow {
+  from { 
+    box-shadow: 0 20px 40px rgba(0, 255, 136, 0.6), 
+                0 10px 20px rgba(0, 0, 0, 0.4),
+                0 0 30px rgba(0, 255, 136, 0.3);
+  }
+  to { 
+    box-shadow: 0 25px 50px rgba(0, 255, 136, 0.8), 
+                0 15px 30px rgba(0, 0, 0, 0.3),
+                0 0 40px rgba(0, 255, 136, 0.5);
+  }
+}
+
+/* Enhanced stretch animation styles */
+.physics-enabled {
+  transform-origin: bottom center;
+  transition: filter 0.1s ease;
+}
+
+.physics-enabled.moving.stretching {
+  animation: elasticPulse 0.2s ease-in-out infinite alternate;
+}
+
+@keyframes elasticPulse {
+  from { transform-origin: bottom center; }
+  to { 
+    transform-origin: bottom center;
+    filter: brightness(1.3) saturate(1.8);
+  }
 }
 `;
 document.head.appendChild(style);
