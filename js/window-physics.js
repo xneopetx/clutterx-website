@@ -16,7 +16,8 @@ class WindowPhysics {
     
     // Physics properties for detached windows
     this.velocity = { x: 0, y: 0 };
-    this.acceleration = { x: 0, y: 0.3 }; // Add gravity
+    this.acceleration = { x: 0, y: 0 }; // No automatic gravity - only on double-click
+    this.gravityEnabled = false; // Toggle gravity with double-click
     this.friction = 0.98; // Less friction for better feel
     this.bounce = 0.6; // More bouncy
     this.physicsInterval = null;
@@ -36,6 +37,7 @@ class WindowPhysics {
       console.log('🔧 Initializing stretch physics for:', this.window.id);
       
       titleBar.addEventListener('mousedown', this.startDrag.bind(this));
+      titleBar.addEventListener('dblclick', this.toggleGravity.bind(this));
       titleBar.style.cursor = 'grab';
       
       // Store original transform
@@ -155,22 +157,56 @@ class WindowPhysics {
     console.log('🏁 Ended drag');
   }
 
+  toggleGravity(e) {
+    // Only allow gravity toggle when detached
+    if (!this.isDetached) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    this.gravityEnabled = !this.gravityEnabled;
+    this.acceleration.y = this.gravityEnabled ? 0.4 : 0;
+    
+    console.log(`🌍 Gravity ${this.gravityEnabled ? 'ENABLED' : 'DISABLED'} for detached window`);
+    
+    // Visual feedback
+    if (this.gravityEnabled) {
+      this.showNotification('Gravity ON! Window will fall down');
+      this.window.style.boxShadow = '0 0 20px rgba(255, 165, 0, 0.8)';
+    } else {
+      this.showNotification('Gravity OFF! Window floats freely');
+      this.window.style.boxShadow = '';
+    }
+    
+    // Start physics if not already running
+    if (this.gravityEnabled && !this.physicsInterval) {
+      this.startPhysics();
+    }
+  }
+
   applyStretchEffect() {
     const stretchPercent = this.stretchAmount / this.maxStretch;
-    const scaleY = 1 + (stretchPercent * 0.8); // More dramatic stretch - up to 80% taller
-    const skewX = stretchPercent * -6; // More pronounced skew
-    const translateY = -this.stretchAmount * 0.8; // Move up more as it stretches
+    
+    // Make it LONG and THIN - dramatic stretching
+    const scaleY = 1 + (stretchPercent * 3); // Up to 4x taller!
+    const scaleX = 1 - (stretchPercent * 0.4); // Get thinner as it stretches
+    const skewX = stretchPercent * -8; // More dramatic skew
+    const translateY = -this.stretchAmount * 1.2; // Move up dramatically
     
     // Color change for visual feedback - more dramatic
     const intensity = Math.min(stretchPercent, 1);
     const hue = 120 - (intensity * 120); // Green to red transition
     
     // Add pulsing effect when stretching
-    const pulse = Math.sin(Date.now() * 0.02) * 0.1 + 1;
-    const finalScale = scaleY * pulse;
+    const pulse = Math.sin(Date.now() * 0.03) * 0.2 + 1;
+    const finalScaleY = scaleY * pulse;
     
-    this.window.style.transform = `${this.originalTransform} translateY(${translateY}px) scaleY(${finalScale}) skewX(${skewX}deg)`;
-    this.window.style.filter = `hue-rotate(${120 - hue}deg) brightness(${1 + intensity * 0.8}) saturate(${1 + intensity * 2}) drop-shadow(0 0 ${intensity * 20}px rgba(255, ${100 * intensity}, 0, 0.8))`;
+    console.log(`🔥 STRETCH EFFECT: scaleY=${finalScaleY.toFixed(2)}, scaleX=${scaleX.toFixed(2)}, amount=${this.stretchAmount}`);
+    
+    // Set transform origin to bottom for proper stretching
+    this.window.style.transformOrigin = 'center bottom';
+    this.window.style.transform = `${this.originalTransform} translateY(${translateY}px) scaleY(${finalScaleY}) scaleX(${scaleX}) skewX(${skewX}deg)`;
+    this.window.style.filter = `hue-rotate(${120 - hue}deg) brightness(${1 + intensity * 1.2}) saturate(${1 + intensity * 3}) drop-shadow(0 0 ${intensity * 30}px rgba(255, ${100 * intensity}, 0, 0.9))`;
     
     // Add visual indicator when close to snap threshold
     if (this.stretchAmount >= this.snapThreshold * 0.7) {
@@ -182,6 +218,7 @@ class WindowPhysics {
 
   resetStretchEffect() {
     this.window.style.transform = this.originalTransform;
+    this.window.style.transformOrigin = '';
     this.window.style.filter = '';
     this.window.classList.remove('ready-to-detach', 'stretching');
   }
@@ -294,9 +331,11 @@ class WindowPhysics {
 
     const rect = this.window.getBoundingClientRect();
     
-    // Apply gravity and acceleration
-    this.velocity.x += this.acceleration.x;
-    this.velocity.y += this.acceleration.y;
+    // Apply gravity and acceleration only if enabled
+    if (this.gravityEnabled) {
+      this.velocity.x += this.acceleration.x;
+      this.velocity.y += this.acceleration.y;
+    }
     
     let newX = rect.left + this.velocity.x;
     let newY = rect.top + this.velocity.y;
@@ -538,19 +577,23 @@ style.textContent = `
 
 /* Enhanced stretch animation styles */
 .physics-enabled {
-  transform-origin: bottom center;
+  transform-origin: center bottom !important;
   transition: filter 0.1s ease;
 }
 
 .physics-enabled.moving.stretching {
   animation: elasticPulse 0.2s ease-in-out infinite alternate;
+  transform-origin: center bottom !important;
 }
 
 @keyframes elasticPulse {
-  from { transform-origin: bottom center; }
+  from { 
+    transform-origin: center bottom !important;
+    filter: brightness(1.1) saturate(1.5);
+  }
   to { 
-    transform-origin: bottom center;
-    filter: brightness(1.3) saturate(1.8);
+    transform-origin: center bottom !important;
+    filter: brightness(1.4) saturate(2.2);
   }
 }
 `;
