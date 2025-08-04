@@ -8,7 +8,8 @@ class WindowPhysics {
     this.shakeThreshold = 15; // pixels
     this.shakeCount = 0;
     this.slamVelocityThreshold = 500; // pixels per second
-    this.taskbarHeight = 60; // adjust based on your taskbar
+    this.taskbarHeight = 50; // match your actual taskbar height
+    this.taskbarOffset = 2; // match the +2px offset from taskbar.js
     this.dragOffset = { x: 0, y: 0 };
     this.originalDragHandler = null;
     
@@ -59,10 +60,20 @@ class WindowPhysics {
     this.shakeCount = 0;
     this.dragStartTime = Date.now();
     
-    // Calculate offset from mouse to window corner
+    // Get current window position
     const rect = this.window.getBoundingClientRect();
+    
+    // Store initial window position
+    this.initialWindowX = rect.left;
+    this.initialWindowY = rect.top;
+    
+    // Calculate offset from mouse to window corner
     this.dragOffset.x = e.clientX - rect.left;
     this.dragOffset.y = e.clientY - rect.top;
+    
+    // Store the current mouse position
+    this.lastMouseX = e.clientX;
+    this.lastMouseY = e.clientY;
     
     // Record initial position for shake detection
     this.recordPosition(e.clientX, e.clientY);
@@ -83,12 +94,25 @@ class WindowPhysics {
     e.preventDefault();
     this.recordPosition(e.clientX, e.clientY);
     
+    // Calculate how much the mouse moved
+    const deltaX = e.clientX - this.lastMouseX;
+    const deltaY = e.clientY - this.lastMouseY;
+    
+    // Update last mouse position
+    this.lastMouseX = e.clientX;
+    this.lastMouseY = e.clientY;
+    
+    // Get current window position
+    const currentRect = this.window.getBoundingClientRect();
+    const newX = currentRect.left + deltaX;
+    const newY = currentRect.top + deltaY;
+    
     if (this.isDetached) {
       // Free movement when detached
-      this.moveWindowFreely(e.clientX - this.dragOffset.x, e.clientY - this.dragOffset.y);
+      this.moveWindowFreely(newX, newY);
     } else {
-      // Constrained to taskbar rail when attached
-      this.moveOnTaskbarRail(e.clientX - this.dragOffset.x, e.clientY - this.dragOffset.y);
+      // Constrained to taskbar rail when attached - only allow horizontal movement
+      this.moveOnTaskbarRail(newX, newY);
       this.detectShake();
     }
   }
@@ -249,24 +273,26 @@ class WindowPhysics {
     
     this.window.style.left = x + 'px';
     this.window.style.top = y + 'px';
+    this.window.style.bottom = 'auto'; // Clear bottom positioning when free
     this.window.style.position = 'fixed';
   }
 
   moveOnTaskbarRail(x, y) {
     // Constrain to horizontal movement along taskbar
-    const taskbarY = window.innerHeight - this.taskbarHeight - this.window.offsetHeight;
+    // Use bottom positioning to match taskbar.js logic exactly
     const maxX = window.innerWidth - this.window.offsetWidth;
     
     x = Math.max(0, Math.min(maxX, x));
     
     this.window.style.left = x + 'px';
-    this.window.style.top = taskbarY + 'px';
+    this.window.style.bottom = `${this.taskbarHeight + this.taskbarOffset}px`;
+    this.window.style.top = 'auto'; // Clear any top positioning
     this.window.style.position = 'fixed';
   }
 
   snapToTaskbar() {
-    const taskbarY = window.innerHeight - this.taskbarHeight - this.window.offsetHeight;
-    this.window.style.top = taskbarY + 'px';
+    this.window.style.bottom = `${this.taskbarHeight + this.taskbarOffset}px`;
+    this.window.style.top = 'auto'; // Clear any top positioning
     this.window.style.position = 'fixed';
   }
 
