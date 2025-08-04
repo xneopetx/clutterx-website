@@ -5,12 +5,18 @@ class WindowPhysics {
     this.isDetached = false;
     this.isDragging = false;
     this.lastPositions = [];
-    this.shakeThreshold = 15; // pixels
+    this.shakeThreshold = 25; // pixels - much higher threshold
     this.shakeCount = 0;
     this.slamVelocityThreshold = 500; // pixels per second
     this.taskbarHeight = 50; // match your actual taskbar height
     this.taskbarOffset = 2; // match the +2px offset from taskbar.js
     this.dragOffset = { x: 0, y: 0 };
+    
+    // Physics properties for detached windows
+    this.velocity = { x: 0, y: 0 };
+    this.friction = 0.95; // damping factor
+    this.bounce = 0.3; // bounce factor when hitting edges
+    this.physicsInterval = null;
     this.originalDragHandler = null;
     
     this.init();
@@ -28,15 +34,17 @@ class WindowPhysics {
       console.log('Found title bar for', this.window.id, titleBar);
       
       titleBar.addEventListener('mousedown', this.startDrag.bind(this));
-      // Add double-click alternative to detach
+      // Add Shift+double-click alternative to detach (less accidental)
       titleBar.addEventListener('dblclick', (e) => {
         e.preventDefault();
-        if (!this.isDetached) {
-          console.log('🔄 Double-click detach triggered!');
-          this.detachWindow();
-        } else {
-          console.log('🔄 Double-click reattach triggered!');
-          this.reattachWindow();
+        if (e.shiftKey) { // Require Shift key to prevent accidental detach
+          if (!this.isDetached) {
+            console.log('🔄 Shift+Double-click detach triggered!');
+            this.detachWindow();
+          } else {
+            console.log('🔄 Shift+Double-click reattach triggered!');
+            this.reattachWindow();
+          }
         }
       });
       titleBar.style.cursor = 'grab';
@@ -98,6 +106,12 @@ class WindowPhysics {
     const deltaX = e.clientX - this.lastMouseX;
     const deltaY = e.clientY - this.lastMouseY;
     
+    // Track velocity for physics when detached
+    if (this.isDetached) {
+      this.velocity.x = deltaX * 0.8; // Apply some momentum
+      this.velocity.y = deltaY * 0.8;
+    }
+    
     // Update last mouse position
     this.lastMouseX = e.clientX;
     this.lastMouseY = e.clientY;
@@ -108,7 +122,7 @@ class WindowPhysics {
     const newY = currentRect.top + deltaY;
     
     if (this.isDetached) {
-      // Free movement when detached
+      // Free movement when detached with physics
       this.moveWindowFreely(newX, newY);
     } else {
       // Constrained to taskbar rail when attached - only allow horizontal movement
@@ -126,6 +140,11 @@ class WindowPhysics {
     
     if (this.isDetached) {
       this.checkForSlamReattach(e);
+      // Start physics simulation when letting go of detached window
+      this.startPhysics();
+    } else {
+      // Stop physics when attached
+      this.stopPhysics();
     }
     
     // Save position
@@ -141,38 +160,57 @@ class WindowPhysics {
   }
 
   detectShake() {
-    if (this.lastPositions.length < 3) return;
+    if (this.lastPositions.length < 8) return; // Need more positions for strict detection
     
-    // Much more sensitive shake detection
+    // Much more strict shake detection - need significant upward movement
     let verticalMovements = 0;
     let upwardMovement = 0;
     let totalVerticalDistance = 0;
+    let maxUpwardDelta = 0;
+    let consecutiveUpward = 0;
+    let maxConsecutiveUpward = 0;
     
     for (let i = 1; i < this.lastPositions.length; i++) {
       const deltaY = this.lastPositions[i].y - this.lastPositions[i-1].y;
       const absDeltaY = Math.abs(deltaY);
       
-      // Lower threshold for more sensitive detection
-      if (absDeltaY > 8) {
+      // Higher threshold for stricter detection
+      if (absDeltaY > this.shakeThreshold) {
         verticalMovements++;
         totalVerticalDistance += absDeltaY;
-        if (deltaY < 0) upwardMovement++; // negative = upward
+        
+        if (deltaY < 0) { // upward movement
+          upwardMovement++;
+          maxUpwardDelta = Math.max(maxUpwardDelta, absDeltaY);
+          consecutiveUpward++;
+          maxConsecutiveUpward = Math.max(maxConsecutiveUpward, consecutiveUpward);
+        } else {
+          consecutiveUpward = 0;
+        }
       }
     }
     
     // Debug output
     if (verticalMovements > 0) {
-      console.log('🔍 Shake detected:', {
+      console.log('🔍 Shake analysis:', {
         verticalMovements,
         upwardMovement,
         totalDistance: totalVerticalDistance,
+        maxUpwardDelta,
+        maxConsecutiveUpward,
         threshold: this.shakeThreshold
       });
     }
     
-    // Much more lenient conditions: just need some upward movement
-    if (verticalMovements >= 2 && upwardMovement >= 1 && totalVerticalDistance > 20) {
-      console.log('🚀 DETACHING WINDOW - shake criteria met!');
+    // Much stricter conditions: need significant upward shaking
+    const hasStrongShake = verticalMovements >= 5;
+    const hasUpwardForce = upwardMovement >= 3;
+    const hasDistance = totalVerticalDistance > 100;
+    const hasIntensity = maxUpwardDelta > 35;
+    const hasConsistency = maxConsecutiveUpward >= 2;
+    
+    if (hasStrongShake && hasUpwardForce && hasDistance && hasIntensity && hasConsistency) {
+      console.log('🚀 DETACHING WINDOW - strict shake criteria met!');
       this.detachWindow();
     }
   }
@@ -183,6 +221,12 @@ class WindowPhysics {
     this.isDetached = true;
     this.window.classList.add('detached');
     this.window.style.zIndex = '9999';
+    
+    // Convert to top positioning for free movement
+    const rect = this.window.getBoundingClientRect();
+    this.window.style.left = rect.left + 'px';
+    this.window.style.top = rect.top + 'px';
+    this.window.style.bottom = 'auto';
     
     // Add shake animation
     this.window.classList.add('shaking');
@@ -198,7 +242,7 @@ class WindowPhysics {
     console.log('🚀 Window detached from taskbar!');
     
     // Visual notification
-    this.showNotification('Window detached! Drag freely anywhere.');
+    this.showNotification('Window detached! Now has physics - try throwing it!');
   }
 
   checkForSlamReattach(e) {
@@ -238,6 +282,9 @@ class WindowPhysics {
 
   reattachWindow() {
     if (!this.isDetached) return; // Already attached
+    
+    // Stop physics simulation
+    this.stopPhysics();
     
     this.isDetached = false;
     this.window.classList.remove('detached');
@@ -294,6 +341,75 @@ class WindowPhysics {
     this.window.style.bottom = `${this.taskbarHeight + this.taskbarOffset}px`;
     this.window.style.top = 'auto'; // Clear any top positioning
     this.window.style.position = 'fixed';
+  }
+
+  startPhysics() {
+    // Stop any existing physics
+    this.stopPhysics();
+    
+    console.log('🌪️ Starting physics with velocity:', this.velocity);
+    
+    // Start physics simulation
+    this.physicsInterval = setInterval(() => {
+      this.updatePhysics();
+    }, 16); // ~60fps
+  }
+
+  stopPhysics() {
+    if (this.physicsInterval) {
+      clearInterval(this.physicsInterval);
+      this.physicsInterval = null;
+    }
+    this.velocity.x = 0;
+    this.velocity.y = 0;
+  }
+
+  updatePhysics() {
+    if (!this.isDetached || this.isDragging) {
+      this.stopPhysics();
+      return;
+    }
+
+    // Get current position
+    const rect = this.window.getBoundingClientRect();
+    let newX = rect.left + this.velocity.x;
+    let newY = rect.top + this.velocity.y;
+
+    // Boundary collision detection with bounce
+    const maxX = window.innerWidth - this.window.offsetWidth;
+    const maxY = window.innerHeight - this.window.offsetHeight;
+
+    // Horizontal boundaries
+    if (newX <= 0) {
+      newX = 0;
+      this.velocity.x = -this.velocity.x * this.bounce;
+    } else if (newX >= maxX) {
+      newX = maxX;
+      this.velocity.x = -this.velocity.x * this.bounce;
+    }
+
+    // Vertical boundaries
+    if (newY <= 0) {
+      newY = 0;
+      this.velocity.y = -this.velocity.y * this.bounce;
+    } else if (newY >= maxY) {
+      newY = maxY;
+      this.velocity.y = -this.velocity.y * this.bounce;
+    }
+
+    // Apply friction
+    this.velocity.x *= this.friction;
+    this.velocity.y *= this.friction;
+
+    // Stop physics if velocity is very low
+    if (Math.abs(this.velocity.x) < 0.1 && Math.abs(this.velocity.y) < 0.1) {
+      this.stopPhysics();
+      return;
+    }
+
+    // Update position
+    this.window.style.left = newX + 'px';
+    this.window.style.top = newY + 'px';
   }
 
   saveWindowPosition() {
