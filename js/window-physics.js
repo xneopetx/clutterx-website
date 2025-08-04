@@ -27,6 +27,17 @@ class WindowPhysics {
       console.log('Found title bar for', this.window.id, titleBar);
       
       titleBar.addEventListener('mousedown', this.startDrag.bind(this));
+      // Add double-click alternative to detach
+      titleBar.addEventListener('dblclick', (e) => {
+        e.preventDefault();
+        if (!this.isDetached) {
+          console.log('🔄 Double-click detach triggered!');
+          this.detachWindow();
+        } else {
+          console.log('🔄 Double-click reattach triggered!');
+          this.reattachWindow();
+        }
+      });
       titleBar.style.cursor = 'grab';
     } else {
       console.warn('No title bar found for window:', this.window.id);
@@ -106,22 +117,38 @@ class WindowPhysics {
   }
 
   detectShake() {
-    if (this.lastPositions.length < 5) return;
+    if (this.lastPositions.length < 3) return;
     
-    // Check for rapid up-down movement (shake)
+    // Much more sensitive shake detection
     let verticalMovements = 0;
     let upwardMovement = 0;
+    let totalVerticalDistance = 0;
     
     for (let i = 1; i < this.lastPositions.length; i++) {
       const deltaY = this.lastPositions[i].y - this.lastPositions[i-1].y;
-      if (Math.abs(deltaY) > this.shakeThreshold) {
+      const absDeltaY = Math.abs(deltaY);
+      
+      // Lower threshold for more sensitive detection
+      if (absDeltaY > 8) {
         verticalMovements++;
+        totalVerticalDistance += absDeltaY;
         if (deltaY < 0) upwardMovement++; // negative = upward
       }
     }
     
-    // If enough upward movement detected (shake up gesture)
-    if (verticalMovements >= 3 && upwardMovement >= 2) {
+    // Debug output
+    if (verticalMovements > 0) {
+      console.log('🔍 Shake detected:', {
+        verticalMovements,
+        upwardMovement,
+        totalDistance: totalVerticalDistance,
+        threshold: this.shakeThreshold
+      });
+    }
+    
+    // Much more lenient conditions: just need some upward movement
+    if (verticalMovements >= 2 && upwardMovement >= 1 && totalVerticalDistance > 20) {
+      console.log('🚀 DETACHING WINDOW - shake criteria met!');
       this.detachWindow();
     }
   }
