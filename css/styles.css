@@ -35,9 +35,9 @@
 
 @font-face {
     font-family: 'Michroma';
-    src: url('fonts/Michroma-Regular.ttf') format('truetype'),
-         url('fonts/Michroma-Regular.woff2') format('woff2'),
-         url('fonts/Michroma-Regular.woff') format('woff');
+    src: url('/fonts/Michroma-Regular.ttf') format('truetype'),
+         url('/fonts/Michroma-Regular.woff2') format('woff2'),
+         url('/fonts/Michroma-Regular.woff') format('woff');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
