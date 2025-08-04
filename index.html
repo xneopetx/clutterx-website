@@ -1,0 +1,341 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>clutterx</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/chat.css">
+  <link rel="stylesheet" href="css/music-player.css">
+</head>
+<body>
+  <!-- Header -->
+  <header onclick="location.hash = '#home';" style="cursor: pointer;">
+    <img src="images/clutter-header-blue-crome.png"
+         alt="clutterx header"
+         class="header-img">
+  </header>
+
+  <!-- Top decorative nav -->
+  <nav class="button-nav">
+    <div class="decorative-x">
+      <img src="images/buttons/nav-x.png"
+           alt=""
+           class="decorative-x-img">
+    </div>
+    <div class="nav-buttons-container">
+      <a href="#shop" class="nav-button">
+        <div class="nav-button-inner">
+          <img src="images/buttons/nav-shop.png" alt="Shop">
+          <span class="sparkle s1"></span>
+          <span class="sparkle s2"></span>
+          <span class="sparkle s3"></span>
+          <span class="sparkle s4"></span>
+          <span class="sparkle s5"></span>
+        </div>
+      </a>
+      <a href="#gallery" class="nav-button">
+        <div class="nav-button-inner">
+          <img src="images/buttons/nav-gallery.png" alt="Gallery">
+          <span class="sparkle s1"></span>
+          <span class="sparkle s2"></span>
+          <span class="sparkle s3"></span>
+          <span class="sparkle s4"></span>
+          <span class="sparkle s5"></span>
+        </div>
+      </a>
+      <a href="#blog" class="nav-button">
+        <div class="nav-button-inner">
+          <img src="images/buttons/nav-blog.png" alt="Blog">
+          <span class="sparkle s1"></span>
+          <span class="sparkle s2"></span>
+          <span class="sparkle s3"></span>
+          <span class="sparkle s4"></span>
+          <span class="sparkle s5"></span>
+        </div>
+      </a>
+    </div>
+    <div class="decorative-x">
+      <img src="images/buttons/nav-x.png"
+           alt=""
+           class="decorative-x-img">
+    </div>
+  </nav>
+
+  <!-- Dynamic content area—spa.js will inject home.html, gallery.html, etc. here -->
+  <main id="content" class="main-content">
+  </main>
+
+  <!-- Bottom taskbar -->
+  <div class="taskbar">
+    <button class="start-button" id="start-btn" onclick="location.hash = '#home'; document.getElementById('start-menu').style.display='none';">
+      <img src="images/buttons/start-flag.png"
+           alt="Start"
+           class="start-flag">
+    </button>
+    <div id="start-menu" style="display: none; position: fixed; left: 10px; bottom: 60px; min-width: 180px; background: rgba(255,255,255,0.98); border-radius: 8px; box-shadow: 0 4px 24px rgba(0,0,0,0.19); z-index: 2000; padding: 12px 0; border: 1px solid #b0c8ff; font-family: 'Michroma', sans-serif;">
+      <ul style="list-style: none; margin: 0; padding: 0;">
+        <li style="padding: 10px 24px; cursor: pointer;">Shop</li>
+        <li style="padding: 10px 24px; cursor: pointer;">Gallery</li>
+        <li style="padding: 10px 24px; cursor: pointer;">Blog</li>
+        <li style="padding: 10px 24px; cursor: pointer;">About</li>
+      </ul>
+    </div>
+    <div class="taskbar-items">
+      <div class="taskbar-item" id="chat-btn">
+        <span class="taskbar-icon">💬</span>
+        <span class="taskbar-text">xChat</span>
+      </div>
+      <div class="taskbar-item" id="music-btn">
+        <span class="taskbar-icon">🎵</span>
+        <span class="taskbar-text">xPod</span>
+      </div>
+    </div>
+    <div class="taskbar-clock">
+      <span id="taskbar-time"></span>
+    </div>
+  </div>
+
+  <!-- Persistent Chat Window -->
+  <div id="chat-window" class="chat-window floating-window" hidden>
+    <div class="chat-header">
+      <div class="chat-title">
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDE2IDE2IiBmaWxsPSJ3aGl0ZSI+PHBhdGggZD0iTTggMUM0LjEgMSAxIDQuMSAxIDhzMy4xIDcgNyA3IDctMy4xIDctN1MxMS45IDEgOCAxem0wIDFjMy4zIDAgNiAyLjcgNiA2cy0yLjcgNi02IDYtNi0yLjctNi02IDIuNy02IDYtNnoiLz48cGF0aCBkPSJNOC41IDR2NGgzVjloLTN2NGgtMXYtNEg0VjhoMy41VjRoMXoiLz48L3N2Zz4="
+             alt="Chat icon"
+             style="width:16px;height:16px;margin-right:4px;">
+        <span>xChatx_Live</span>
+      </div>
+      <div class="chat-controls">
+        <button id="settings-btn" class="chat-control-btn" title="Settings">⚙️</button>
+        <button id="minimize-btn" class="chat-control-btn" title="Minimize">_</button>
+        <button id="close-chat" class="chat-control-btn" title="Close"
+                style="font-weight:bold;font-size:14px;line-height:1">×</button>
+      </div>
+    </div>
+
+    <!-- Chat Settings Modal -->
+    <div id="chat-settings-modal" style="display:none;">
+      <div class="settings-content">
+        <h3>Chat Settings</h3>
+        <form id="settings-form" class="settings-form">
+          <div class="form-group">
+            <label for="settings-name">Your Name:</label>
+            <input type="text" id="settings-name" required>
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;">
+            <label for="settings-color" style="margin-right:10px;white-space:nowrap;">Message Color:</label>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input type="color" id="settings-color" value="#5d8aa8">
+              <span id="color-value" style="font-size:12px;">#5D8AA8</span>
+            </div>
+          </div>
+          <div class="form-group" style="flex-direction:row;align-items:center;gap:10px;">
+            <input type="checkbox" id="settings-wingdings">
+            <label for="settings-wingdings" style="margin:0;">Use Wingdings</label>
+          </div>
+          <div class="form-actions">
+            <button type="button" id="cancel-settings" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="chat-screen">
+      <div id="messages">
+        <div class="messages-list">
+          <div class="message">
+            <span class="name"
+                  style="background-color:#e0e0e0;color:#333;padding:2px 8px;border-radius:9px;margin-right:6px;font-weight:bold;">
+              System:
+            </span>
+            <span class="message-text">Welcome to the chat! Start by typing a message below.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-input-container">
+        <form id="chat-form" class="chat-input">
+          <input type="text" id="text" placeholder="Type a message…" required>
+          <button type="button" id="emoji-btn" title="Emoji">😊</button>
+          <button type="submit" id="send-button">Send</button>
+        </form>
+        <div id="emoji-picker" class="hidden">
+          <!-- Emojis will be inserted here by JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Persistent Music Player Window -->
+  <div id="ipod-window" class="ipod-window floating-window" hidden>
+    <div class="ipod-header" id="ipod-header">
+      <div class="ipod-title">
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDE2IDE2IiBmaWxsPSIjMzMzIj48cGF0aCBkPSJNOCAxQzQuMSAxIDEgNC4xIDEgOHMzLjEgNyA3IDcgNy0zLjEgNy03UzExLjkgMSA4IDFabTAgMWMzLjMgMCA2IDIuNyA2IDZzLTIuNyA2LTYgNi02LTIuNy02LTYtNnoiLz48cGF0aCBkPSJNOCAxQzQuMSAxIDEgNC4xIDEgOHMzLjEgNyA3IDcgNy0zLjEgNy03UzExLjkgMSA4IDFabTAgMWMzLjMgMCA2IDIuNyA2IDZzLTIuNyA2LTYgNi02LTIuNy02LTYtNnoiLz48L3N2Zz4="
+             alt=""
+             style="width:16px;height:16px;margin-right:4px;">
+        <span>xPod</span>
+      </div>
+      <div class="ipod-controls">
+        <button id="minimize-ipod" class="minimize-btn" title="Minimize">_</button>
+        <button id="close-ipod" class="close-btn" title="Close">×</button>
+      </div>
+    </div>
+    <div class="ipod-body">
+      <!-- iPod Screen -->
+      <div class="ipod-screen">
+        <div class="screen-header">
+          <span class="now-playing-label">Now Playing</span>
+          <div class="battery-indicator">🔋</div>
+        </div>
+        <div class="now-playing-content">
+          <div class="album-art-container">
+            <div class="album-art" id="album-art">
+              <img id="album-art-img" src="" alt="Album Art">
+              <div class="album-art-placeholder">🎵</div>
+            </div>
+          </div>
+          <div class="track-info">
+            <div class="track-title" id="current-track-title">No track selected</div>
+            <div class="artist-name" id="current-artist">Select a track to play</div>
+          </div>
+        </div>
+        <div class="progress-container">
+          <div class="time-display">
+            <span id="current-time">0:00</span>
+            <span id="duration">0:00</span>
+          </div>
+          <div class="progress-bar" id="progress-bar-container">
+            <div class="progress" id="progress-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- iPod Controls -->
+      <div class="ipod-controls-section">
+        <div class="center-controls">
+          <button id="prev-track" class="control-btn nav-track-btn" title="Previous">
+            <img src="images/buttons/xpod-btn-fastbackward.png" alt="Previous" class="nav-track-icon">
+          </button>
+          <button id="play-pause" class="play-btn" title="Play/Pause">
+            <img src="images/buttons/xpod-btn-play.png" alt="Play" class="play-icon">
+            <img src="images/buttons/xpod-btn-pause.png" alt="Pause" class="pause-icon" style="display:none;">
+          </button>
+          <button id="next-track" class="control-btn nav-track-btn" title="Next">
+            <img src="images/buttons/xpod-btn-fastforward.png" alt="Next" class="nav-track-icon">
+          </button>
+        </div>
+        <div class="nav-buttons">
+          <div class="horizontal-nav">
+            <button class="nav-btn shuffle-btn" id="nav-left" title="Shuffle">🔀</button>
+        <!-- Spotify button -->
+          <button class="select-btn spotify-btn" id="select-btn" title="Open in Spotify">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Spotify_logo_without_text.svg/2048px-Spotify_logo_without_text.svg.png" alt="Spotify" class="spotify-icon">
+          </button>
+        <!-- Repeat button -->
+            <button class="nav-btn repeat-btn" id="nav-right" title="Repeat">🔁</button>
+          </div>
+          <button class="nav-btn" id="nav-up" title="Up">▲</button>
+          <button class="nav-btn" id="nav-down" title="Down">▼</button>
+        </div>
+        <button class="menu-btn" id="menu-btn" title="Menu">MENU</button>
+      </div>
+
+      <!-- Volume Control -->
+      <div class="volume-control">
+        <div class="volume-label">Volume</div>
+        <div class="volume-slider-container">
+          <input type="range" id="volume-slider" class="volume-slider" min="0" max="100" value="70">
+          <div class="volume-display" id="volume-display">70%</div>
+        </div>
+      </div>
+    </div>
+
+<audio id="audio" preload="metadata"></audio>
+<div id="playlist-audios" style="display: none;">
+  <audio 
+    src="music/Officespacerentalcom.mp3" 
+    data-title="OfficeSpaceRental.com" 
+    data-artist="lil lördag, Yung Alvedon" 
+    data-spotifyurl="https://open.spotify.com/track/7lvmBWjkf88e5sOle5e2NX?si=fe83665bc6ba431e" 
+    data-albumart="images/albumart/OfficeSpaceRental.com.jpg"
+    preload="metadata"
+  ></audio>
+
+  <audio 
+    src="music/serenity.mp3" 
+    data-title="serenity & bliss" 
+    data-artist="lil lördag, Yung Alvedon" 
+    data-spotifyurl="https://open.spotify.com/track/5kle3zgFqBjtXDefzejCFF?si=0b53114800e24991" 
+    data-albumart="images/albumart/serenity.jpg"
+    preload="metadata"
+  ></audio>
+
+  <audio 
+    src="music/Yes - luft Yung Alvedon.mp3" 
+    data-title="yes" 
+    data-artist="luft, Yung Alvedon" 
+    data-spotifyurl="https://open.spotify.com/track/44VZY0HdFuJ9dOyebqFXRE?si=93e5008227bf4c34" 
+    data-albumart="images/albumart/yes.jpg"
+    preload="metadata"
+  ></audio>
+
+  <audio 
+    src="music/air_force_one_hack_2007_lil lördag.mp3" 
+    data-title="air_force_one_hack_2007" 
+    data-artist="lil lördag, Yung Alvedon" 
+    data-spotifyurl="https://open.spotify.com/track/3vOPHnl4x7YpASFNJ1gj2E?si=3f5f02ecf2a43e5" 
+    data-albumart="images/albumart/air_force_one_hack_2007.jpg"
+    preload="metadata"
+  ></audio>
+
+  <audio 
+    src="music/creepschool_radiohead_lil lördag.mp3" 
+    data-title="creepschool by radiohead :)" 
+    data-artist="lil lördag" 
+    data-spotifyurl="https://open.spotify.com/track/6fmOoEdWDcq9WbihWBNC1s?si=59164a5d42e34e76" 
+    data-albumart="images/albumart/creepschool.jpg"
+    preload="metadata"
+  ></audio>
+
+  <audio 
+    src="music/goblinc0re.mp3" 
+    data-title="goblinc0re.mp3 (wav)" 
+    data-artist="Unknown Artist" 
+    data-spotifyurl="https://open.spotify.com/track/5OxWhEuRuIyUQ3es9SyzFO?si=f22d559fd6ee4813" 
+    data-albumart="images/albumart/goblincore.jpg"
+    preload="metadata"
+  ></audio>
+</div>
+
+  </div>
+
+  <!-- Your JS modules -->
+  <script type="module" src="js/sparkles.js"></script>
+
+  <script type="module" src="js/chat.js"></script>
+  <script type="module" src="js/taskbar.js"></script>
+  <script type="module" src="js/music-player.js"></script>
+  <!-- Load discord-updates.js last to ensure all dependencies are loaded -->
+  <script type="module" src="js/discord-updates.js"></script>
+
+  <!-- Clock updater -->
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const t = now.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+      document.getElementById('taskbar-time').textContent = t;
+    }
+    updateClock();
+    setInterval(updateClock, 60000);
+  </script>
+
+  <!-- SPA loader (must be last) -->
+  <script src="js/spa.js"></script>
+</body>
+</html>

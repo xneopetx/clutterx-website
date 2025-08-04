@@ -1,0 +1,741 @@
+/* iPod Music Player Styles - FIXED VERSION */
+
+.ipod-window {
+    position: fixed;
+    width: 300px;
+    height: 450px;
+    background: transparent;
+    border: 2px solid #87ceeb;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: var(--z-window-base);
+    font-family: var(--font-ui);
+    font-size: 12px;
+    display: none;
+    overflow: hidden;
+}
+
+.ipod-window.active {
+    z-index: var(--z-window-active);
+}
+
+/* Header */
+.ipod-header {
+    background: linear-gradient(to bottom, #b8dff5 0%, #87ceeb 100%);
+    border-bottom: 1px solid #5f9ea0;
+    padding: 4px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 24px;
+    cursor: move;
+}
+
+.ipod-title {
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+    color: #2c5282;
+    font-size: 12px;
+}
+
+.ipod-controls {
+    display: flex;
+    gap: 2px;
+}
+
+.ipod-controls button {
+    width: 16px;
+    height: 16px;
+    border: 1px solid #5f9ea0;
+    background: linear-gradient(to bottom, #f0f8ff 0%, #b8dff5 100%);
+    color: #2c5282;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+}
+
+.ipod-controls button:hover {
+    background: linear-gradient(to bottom, #ffffff 0%, #cce7ff 100%);
+}
+
+.ipod-controls button:active {
+    background: linear-gradient(to bottom, #87ceeb 0%, #5f9ea0 100%);
+    color: white;
+}
+
+/* Body */
+.ipod-body {
+    padding: 12px;
+    height: calc(100% - 32px);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    background: transparent;
+}
+
+/* FIXED: Create the background with a rounded cutout that matches the screen exactly */
+.ipod-body::before {
+    content: '';
+    position: absolute;
+    top: -34px;
+    left: -4px;
+    right: -4px;
+    bottom: -8px;
+    background: linear-gradient(135deg, #e6f3ff 0%, #cce7ff 100%);
+    /* FIXED: Perfect cutout coordinates provided by user */
+    clip-path: path('M0,0 L308,0 L308,466 L0,466 Z M15,47 Q13,47 15,47 L15,203 Q15,213 25,213 L275,213 Q287,213 287,203 L287,59 Q287,47 275,47 L25,47 Q13,47 13,59 Z');
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* FIXED: iPod Screen with better height management */
+.ipod-screen {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: var(--blur-heavy);
+    -webkit-backdrop-filter: var(--blur-heavy);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 8px;
+    height: 192px; /* FIXED: Reduced height to ensure progress bar fits */
+    color: #333;
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.screen-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+    padding-bottom: 4px;
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+.now-playing-label {
+    font-weight: bold;
+    font-size: 9px;
+}
+
+.battery-indicator {
+    font-size: 10px;
+}
+
+/* FIXED: Better layout for now playing content - removed margin-bottom and used max-height instead */
+.now-playing-content {
+    display: flex;
+    align-items: flex-start;
+    padding: 4px;
+    gap: 8px;
+    margin: 2px 0;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    /* FIXED: Use max-height instead of margin-bottom to prevent overlap */
+    max-height: calc(100% - 35px); /* FIXED: Slightly more space needed for bigger progress bar */
+}
+
+.album-art-container {
+    flex-shrink: 0;
+    width: 85px; /* FIXED: Reduced from 100px to fit better */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.album-art {
+    width: 100%;
+    height: 85px; /* FIXED: Reduced from 100px to match container */
+    background: #333;
+    border: 1px solid #555;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.album-art-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px; /* FIXED: Reduced icon size to match smaller album art */
+    color: #666;
+    background: #333;
+    z-index: 1;
+}
+
+#album-art-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#album-art-img.loaded {
+    opacity: 1;
+}
+
+.track-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 6px;
+    min-width: 0;
+    overflow: hidden;
+    height: auto;
+    padding: 4px 0;
+    max-width: calc(100% - 93px); /* FIXED: Adjusted for smaller album art (85px + 8px gap) */
+}
+
+.track-title {
+    font-weight: bold;
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    display: block;
+}
+
+.artist-name {
+    font-size: 9px;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    display: block;
+}
+
+/* FIXED: Progress container positioning - removed background container */
+.progress-container {
+    position: absolute;
+    bottom: 6px;
+    left: 8px;
+    right: 8px;
+    box-sizing: border-box;
+    z-index: 2;
+    /* FIXED: Removed background and padding - just the progress elements */
+}
+
+.time-display {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px; /* FIXED: Reduced from 11px to be less bold */
+    margin-bottom: 3px; /* FIXED: Reduced margin slightly */
+    color: #333;
+    font-weight: normal; /* FIXED: Removed bold to make it more subtle */
+}
+
+.progress-bar {
+    height: 6px; /* FIXED: Reduced from 8px to be less bold */
+    background: #333;
+    border: 1px solid #555;
+    border-radius: 3px; /* FIXED: Adjusted border radius for new height */
+    position: relative;
+    cursor: pointer;
+}
+
+.progress {
+    height: 100%;
+    background: linear-gradient(to right, #5d8aa8 0%, #88ccff 100%);
+    border-radius: 2px; /* FIXED: Adjusted border radius for new progress bar size */
+    width: 0%;
+    transition: width 0.1s ease;
+}
+
+/* iPod Controls Section */
+.ipod-controls-section {
+    background: linear-gradient(135deg, #f0f0f0 0%, #d0d0d0 100%);
+    border: 2px solid #999;
+    border-radius: 50px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    flex-shrink: 0; /* FIXED: Prevent controls from shrinking */
+}
+
+.center-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.control-btn, .play-btn {
+    width: 32px;
+    height: 32px;
+    border: 2px solid #666;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
+    color: #333;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.1s ease;
+}
+
+.play-btn {
+    width: 40px;
+    height: 40px;
+    border-color: #333;
+    position: relative;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.play-btn img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    margin-left: 0.5px;
+}
+
+/* Navigation track buttons (previous/next) */
+.nav-track-btn {
+    position: relative;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-track-icon {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    margin-left: 0.5px;
+}
+
+.control-btn:hover, .play-btn:hover {
+    background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+    transform: scale(1.05);
+}
+
+.control-btn:active, .play-btn:active {
+    background: linear-gradient(135deg, #d0d0d0 0%, #b0b0b0 100%);
+    transform: scale(0.95);
+}
+
+.nav-buttons {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.horizontal-nav {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.nav-btn, .select-btn {
+    width: 24px;
+    height: 24px;
+    border: 1px solid #666;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
+    color: #333;
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.1s ease;
+}
+
+.select-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+    border: 1px solid #666;
+    border-bottom-color: #222;
+    border-right-color: #222;
+    background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
+    box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.1),
+                inset -1px -1px 2px rgba(0, 0, 0, 0.3);
+    padding: 0;
+    overflow: hidden;
+    border-radius: 14px;
+    position: relative;
+}
+
+.spotify-icon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    transition: all 0.2s ease;
+    filter: brightness(0.9) contrast(1.2) grayscale(100%) sepia(100%) saturate(0%) hue-rotate(0deg);
+    position: relative;
+    z-index: 1;
+    transform: scale(1.1);
+}
+
+.select-btn:hover .spotify-icon {
+    filter: brightness(1) contrast(1.2) grayscale(100%) sepia(100%) saturate(0%) hue-rotate(0deg);
+}
+
+.select-btn:active .spotify-icon {
+    transform: scale(1);
+    filter: brightness(0.8) contrast(1.2) grayscale(100%) sepia(100%) saturate(0%) hue-rotate(0deg);
+}
+
+.select-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.15);
+    pointer-events: none;
+}
+
+.nav-btn:hover, .select-btn:hover {
+    background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+    transform: scale(1.05);
+}
+
+.nav-btn:active, .select-btn:active {
+    background: linear-gradient(135deg, #d0d0d0 0%, #b0b0b0 100%);
+    transform: scale(0.95);
+}
+
+/* FIXED: Menu button moved to top of controls panel */
+.menu-btn {
+    position: absolute;
+    top: -8px; /* FIXED: Moved from bottom: -8px to top: -8px */
+    width: 40px;
+    height: 16px;
+    border: 1px solid #666;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
+    color: #333;
+    font-size: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.1s ease;
+}
+
+.menu-btn:hover {
+    background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+}
+
+.menu-btn:active {
+    background: linear-gradient(135deg, #d0d0d0 0%, #b0b0b0 100%);
+    transform: scale(0.95);
+}
+
+/* Volume Control - Compact iPod Style */
+.volume-control {
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 32px;
+    flex-shrink: 0; /* FIXED: Prevent volume control from shrinking */
+}
+
+.volume-label {
+    display: none;
+}
+
+.volume-slider-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.volume-slider {
+    flex: 1;
+    height: 4px;
+    background: linear-gradient(180deg, #ddd 0%, #f0f0f0 50%, #fff 100%);
+    border: 1px solid #999;
+    border-radius: 2px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.15);
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #fff 0%, #f0f0f0 50%, #e0e0e0 100%);
+    cursor: pointer;
+    border: 1px solid #999;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    transition: all 0.1s ease;
+}
+
+.volume-slider::-webkit-slider-thumb:hover {
+    background: linear-gradient(180deg, #fff 0%, #f8f8f8 50%, #e8e8e8 100%);
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #fff 0%, #f0f0f0 50%, #e0e0e0 100%);
+    cursor: pointer;
+    border: 1px solid #999;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.volume-display {
+    font-size: 10px;
+    font-weight: bold;
+    color: #333;
+    min-width: 28px;
+    text-align: center;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+    font-family: 'Lucida Grande', 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Playlist Overlay Window - iPod Style */
+.screen-playlist {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(180deg, #f8f8f8 0%, #e8e8e8 50%, #d8d8d8 100%);
+    border-radius: 12px;
+    padding: 12px;
+    overflow-y: auto;
+    display: none;
+    z-index: 10;
+    font-family: 'Lucida Grande', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.screen-playlist.active {
+    display: block;
+}
+
+.playlist-overlay-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #ccc;
+    border-bottom-style: inset;
+    margin-bottom: 12px;
+    background: linear-gradient(180deg, #f0f0f0 0%, #e0e0e0 100%);
+    padding: 8px 12px;
+    margin: -12px -12px 12px -12px;
+    border-radius: 10px 10px 0 0;
+}
+
+.playlist-title {
+    color: #333;
+    font-weight: bold;
+    font-size: 13px;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.close-playlist {
+    background: linear-gradient(180deg, #f8f8f8 0%, #e8e8e8 50%, #d8d8d8 100%);
+    border: 1px solid #999;
+    border-top-color: #bbb;
+    border-left-color: #bbb;
+    color: #333;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.1s ease;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.close-playlist:hover {
+    background: linear-gradient(180deg, #fff 0%, #f0f0f0 50%, #e0e0e0 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.close-playlist:active {
+    background: linear-gradient(180deg, #e0e0e0 0%, #d0d0d0 50%, #c8c8c8 100%);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.screen-playlist-item {
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+    font-size: 12px;
+    background: linear-gradient(180deg, #fff 0%, #f8f8f8 50%, #f0f0f0 100%);
+    border: 1px solid #ddd;
+    border-top-color: #eee;
+    border-left-color: #eee;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    color: #333;
+}
+
+.screen-playlist-item:hover {
+    background: linear-gradient(180deg, #fff 0%, #fafafa 50%, #f5f5f5 100%);
+    border-color: #ccc;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9),
+                0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.screen-playlist-item.selected {
+    background: linear-gradient(180deg, #e6f3ff 0%, #cce7ff 50%, #b3daff 100%);
+    border-color: #87ceeb;
+    color: #2c5282;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8),
+                0 0 0 1px #87ceeb;
+}
+
+.screen-playlist-item.playing {
+    background: linear-gradient(180deg, #e6ffe6 0%, #ccffcc 50%, #b3ffb3 100%);
+    border-color: #90ee90;
+    color: #2d5016;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8),
+                0 0 0 1px #90ee90;
+    font-weight: bold;
+}
+
+.screen-track-name {
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+    font-size: 13px;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.screen-track-duration {
+    font-size: 8px;
+    color: #666;
+    min-width: 25px;
+    text-align: right;
+}
+
+.screen-playlist-item.selected .screen-track-duration,
+.screen-playlist-item.playing .screen-track-duration {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Screen playlist scrollbar */
+.screen-playlist::-webkit-scrollbar {
+    width: 4px;
+}
+
+.screen-playlist::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+.screen-playlist::-webkit-scrollbar-thumb {
+    background: rgba(135, 206, 235, 0.5);
+    border-radius: 2px;
+}
+
+.screen-playlist::-webkit-scrollbar-thumb:hover {
+    background: rgba(135, 206, 235, 0.7);
+}
+
+/* Animation for window appearance */
+.ipod-window.show {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .ipod-window {
+        width: 280px;
+        height: 420px;
+    }
+    
+    .ipod-body {
+        padding: 10px;
+    }
+    
+    .ipod-screen {
+        height: 150px; /* FIXED: Adjusted for mobile */
+    }
+    
+    /* FIXED: Adjust max-height for mobile screens */
+    .now-playing-content {
+        max-height: calc(100% - 25px);
+    }
+}
+
+/* Reuse the chat-bounce keyframes for the iPod window */
+.ipod-window.bounce,
+.floating-window.bounce {
+  animation: chat-bounce 0.22s cubic-bezier(.4,2,6,1) both;
+  transform-origin: center bottom;
+}
+
+/* FIXED: Ensure proper bounce animation exists */
+@keyframes chat-bounce {
+  0% { transform: scale(1) translateY(0); }
+  30% { transform: scale(1.05) translateY(-2px); }
+  50% { transform: scale(0.98) translateY(1px); }
+  70% { transform: scale(1.02) translateY(-1px); }
+  100% { transform: scale(1) translateY(0); }
+}
