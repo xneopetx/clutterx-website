@@ -108,8 +108,6 @@ class WindowPhysics {
       // Check for upward stretch when attached
       const upwardDistance = this.stretchStartY - e.clientY;
       
-      console.log(`🎯 Drag check: upwardDistance=${upwardDistance.toFixed(0)}, isDetached=${this.isDetached}, isStretching=${this.isStretching}`);
-      
       if (upwardDistance > 10) {
         // Started stretching upward
         this.isStretching = true;
@@ -118,7 +116,7 @@ class WindowPhysics {
         // Add visual class for stretching
         this.window.classList.add('stretching');
         
-        console.log(`🔥 STRETCHING ACTIVE: ${this.stretchAmount.toFixed(0)}px / ${this.snapThreshold}px`);
+        console.log(`🔥 Stretching: ${this.stretchAmount.toFixed(0)}px / ${this.snapThreshold}px`);
         
         // Apply stretch visual effect
         this.applyStretchEffect();
@@ -207,15 +205,14 @@ class WindowPhysics {
     
     console.log(`🎨 TRANSFORM VALUES: scaleY=${finalScaleY.toFixed(2)}, scaleX=${scaleX.toFixed(2)}, translateY=${translateY.toFixed(0)}, skew=${skewX.toFixed(1)}`);
     
-    // Force transform origin and make sure transform is applied
+    // COMPLETELY CLEAR and set transform - ignore any original transform
     this.window.style.transformOrigin = 'center bottom';
-    this.window.style.transition = 'none'; // Disable any transitions that might interfere
-    const transformString = `${this.originalTransform} translateY(${translateY}px) scaleY(${finalScaleY}) scaleX(${scaleX}) skewX(${skewX}deg)`;
+    this.window.style.transition = 'none !important'; // Force disable transitions
+    const transformString = `translateY(${translateY}px) scaleY(${finalScaleY}) scaleX(${scaleX}) skewX(${skewX}deg)`;
     this.window.style.transform = transformString;
     this.window.style.filter = `hue-rotate(${120 - hue}deg) brightness(${1 + intensity * 1.2}) saturate(${1 + intensity * 3}) drop-shadow(0 0 ${intensity * 30}px rgba(255, ${100 * intensity}, 0, 0.9))`;
     
     console.log(`🎨 APPLIED TRANSFORM: "${transformString}"`);
-    console.log(`🎨 WINDOW ELEMENT:`, this.window);
     
     // Add visual indicator when close to snap threshold
     if (this.stretchAmount >= this.snapThreshold * 0.7) {
@@ -226,10 +223,12 @@ class WindowPhysics {
   }
 
   resetStretchEffect() {
-    this.window.style.transform = this.originalTransform;
+    this.window.style.transform = '';  // Completely clear transform
     this.window.style.transformOrigin = '';
     this.window.style.filter = '';
+    this.window.style.transition = '';
     this.window.classList.remove('ready-to-detach', 'stretching');
+    console.log('🧹 Reset stretch effect - cleared all transforms');
   }
 
   snapBack() {
@@ -270,10 +269,10 @@ class WindowPhysics {
     
     // Dramatic detach effect
     this.window.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-    this.window.style.transform = this.originalTransform + ' scale(1.1) rotate(2deg)';
+    this.window.style.transform = 'scale(1.1) rotate(2deg)';
     
     setTimeout(() => {
-      this.window.style.transform = this.originalTransform;
+      this.window.style.transform = '';
       this.window.style.transition = 'none';
     }, 300);
     
@@ -437,15 +436,15 @@ class WindowPhysics {
     this.window.style.transition = 'transform 0.2s ease, bottom 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
     this.window.style.bottom = '52px';
     this.window.style.top = 'auto';
-    this.window.style.transform = this.originalTransform + ' scale(0.9)';
+    this.window.style.transform = 'scale(0.9)';
     
     setTimeout(() => {
-      this.window.style.transform = this.originalTransform;
+      this.window.style.transform = '';
       this.window.style.transition = 'none';
     }, 400);
     
     this.resetStretchEffect();
-    this.showNotification('Window reattached! Gravity reset - double-click to enable again');
+    this.showNotification('Window reattached to taskbar!');
     
     this.window.dispatchEvent(new CustomEvent('windowReattached', {
       detail: { windowId: this.window.id }
@@ -491,16 +490,12 @@ function initializeWindowPhysics() {
   
   setTimeout(() => {
     const windows = document.querySelectorAll('#chat-window, #ipod-window, .vista-window');
-    console.log('🔍 Found windows:', windows.length);
-    console.log('🔍 Window elements:', windows);
+    console.log('Found windows:', windows.length);
     
     windows.forEach((window) => {
-      console.log(`🔍 Checking window: ${window.id || 'no-id'}, has physics: ${!!window.windowPhysics}`);
       if (!window.windowPhysics) {
-        console.log('✅ Initializing stretch physics for:', window.id || 'unnamed-window');
+        console.log('✅ Initializing stretch physics for:', window.id);
         window.windowPhysics = new WindowPhysics(window);
-      } else {
-        console.log('⚠️ Window already has physics:', window.id);
       }
     });
   }, 100);
@@ -536,25 +531,6 @@ window.debugWindowPhysics = function() {
   if (ipodWindow && !ipodWindow.windowPhysics) {
     console.log('🚀 Manually initializing iPod window stretch physics');
     ipodWindow.windowPhysics = new WindowPhysics(ipodWindow);
-  }
-};
-
-// Test stretch effect directly
-window.testStretch = function() {
-  console.log('🧪 Testing stretch effect...');
-  const chatWindow = document.getElementById('chat-window');
-  if (chatWindow && chatWindow.windowPhysics) {
-    const physics = chatWindow.windowPhysics;
-    physics.stretchAmount = 40; // Simulate stretch
-    physics.applyStretchEffect();
-    console.log('🧪 Applied test stretch to chat window');
-    
-    setTimeout(() => {
-      physics.resetStretchEffect();
-      console.log('🧪 Reset stretch effect');
-    }, 3000);
-  } else {
-    console.log('❌ Chat window or physics not found');
   }
 };
 
@@ -617,22 +593,27 @@ style.textContent = `
 /* Enhanced stretch animation styles */
 .physics-enabled {
   transform-origin: center bottom !important;
-  transition: filter 0.1s ease;
+  transition: filter 0.1s ease !important;
+}
+
+.physics-enabled.moving {
+  z-index: 9998 !important;
+  transition: none !important;
 }
 
 .physics-enabled.moving.stretching {
-  animation: elasticPulse 0.2s ease-in-out infinite alternate;
+  animation: elasticPulse 0.2s ease-in-out infinite alternate !important;
   transform-origin: center bottom !important;
 }
 
 @keyframes elasticPulse {
   from { 
     transform-origin: center bottom !important;
-    filter: brightness(1.1) saturate(1.5);
+    filter: brightness(1.1) saturate(1.5) !important;
   }
   to { 
     transform-origin: center bottom !important;
-    filter: brightness(1.4) saturate(2.2);
+    filter: brightness(1.4) saturate(2.2) !important;
   }
 }
 `;
