@@ -16,17 +16,20 @@ class WindowPhysics {
   }
 
   init() {
-    // Find the title bar for dragging
+    // Find the title bar for dragging - updated to match your HTML structure
     const titleBar = this.window.querySelector('.window-title-bar') || 
+                     this.window.querySelector('.chat-header') ||
+                     this.window.querySelector('.ipod-header') ||
                      this.window.querySelector('.header') ||
                      this.window.querySelector('.title-bar');
     
     if (titleBar) {
-      // Remove any existing drag handlers
-      this.overrideDragHandlers(titleBar);
+      console.log('Found title bar for', this.window.id, titleBar);
       
       titleBar.addEventListener('mousedown', this.startDrag.bind(this));
       titleBar.style.cursor = 'grab';
+    } else {
+      console.warn('No title bar found for window:', this.window.id);
     }
     
     document.addEventListener('mousemove', this.drag.bind(this));
@@ -34,13 +37,6 @@ class WindowPhysics {
     
     // Add visual indicators
     this.window.classList.add('physics-enabled');
-  }
-
-  overrideDragHandlers(titleBar) {
-    // Clone the element to remove all existing event listeners
-    const newTitleBar = titleBar.cloneNode(true);
-    titleBar.parentNode.replaceChild(newTitleBar, titleBar);
-    return newTitleBar;
   }
 
   startDrag(e) {
@@ -306,34 +302,95 @@ class WindowPhysics {
 // Export for use in other modules
 window.WindowPhysics = WindowPhysics;
 
+// Debug function - you can call this in browser console
+window.debugWindowPhysics = function() {
+  console.log('🔍 Debug Window Physics:');
+  const chatWindow = document.getElementById('chat-window');
+  const ipodWindow = document.getElementById('ipod-window');
+  
+  console.log('Chat window:', chatWindow, 'display:', chatWindow?.style.display, 'hidden:', chatWindow?.hidden);
+  console.log('iPod window:', ipodWindow, 'display:', ipodWindow?.style.display, 'hidden:', ipodWindow?.hidden);
+  
+  if (chatWindow && !chatWindow.windowPhysics) {
+    console.log('🚀 Manually initializing chat window physics');
+    chatWindow.windowPhysics = new WindowPhysics(chatWindow);
+  }
+  
+  if (ipodWindow && !ipodWindow.windowPhysics) {
+    console.log('🚀 Manually initializing iPod window physics');
+    ipodWindow.windowPhysics = new WindowPhysics(ipodWindow);
+  }
+};
+
 // Auto-initialize physics for existing windows
 function initializeWindowPhysics() {
+  console.log('🔧 Initializing window physics...');
+  
   // Wait a bit for the DOM to settle
   setTimeout(() => {
     const windows = document.querySelectorAll('#chat-window, #ipod-window, .vista-window');
+    console.log('Found windows:', windows.length);
+    
     windows.forEach((window) => {
-      if (!window.windowPhysics && window.style.display !== 'none') {
-        console.log('Initializing physics for:', window.id);
+      console.log('Checking window:', window.id, 'display:', window.style.display, 'hidden:', window.hidden);
+      
+      if (!window.windowPhysics) {
+        console.log('✅ Initializing physics for:', window.id);
         window.windowPhysics = new WindowPhysics(window);
         window.windowPhysics.loadWindowPosition();
+      } else {
+        console.log('⚠️ Physics already initialized for:', window.id);
       }
     });
-  }, 500);
+  }, 100);
+}
+
+// Initialize multiple times to catch windows when they become visible
+function tryInitialize() {
+  initializeWindowPhysics();
+  setTimeout(initializeWindowPhysics, 500);
+  setTimeout(initializeWindowPhysics, 1000);
 }
 
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeWindowPhysics);
+  document.addEventListener('DOMContentLoaded', tryInitialize);
 } else {
-  initializeWindowPhysics();
+  tryInitialize();
 }
 
 // Also initialize when windows are shown/created
 document.addEventListener('click', (e) => {
   if (e.target.id === 'chat-btn' || e.target.id === 'music-btn') {
-    setTimeout(initializeWindowPhysics, 100);
+    console.log('🎯 Button clicked:', e.target.id);
+    setTimeout(initializeWindowPhysics, 50);
+    setTimeout(initializeWindowPhysics, 200);
+    setTimeout(initializeWindowPhysics, 500);
   }
 });
+
+// Watch for any window that becomes visible
+const observer = new MutationObserver((mutations) => {
+  mutations.forEach((mutation) => {
+    if (mutation.type === 'attributes' && 
+        (mutation.attributeName === 'hidden' || mutation.attributeName === 'style')) {
+      const target = mutation.target;
+      if (target.id === 'chat-window' || target.id === 'ipod-window') {
+        console.log('👀 Window visibility changed:', target.id);
+        setTimeout(() => initializeWindowPhysics(), 100);
+      }
+    }
+  });
+});
+
+// Start observing
+setTimeout(() => {
+  const chatWindow = document.getElementById('chat-window');
+  const ipodWindow = document.getElementById('ipod-window');
+  
+  if (chatWindow) observer.observe(chatWindow, { attributes: true });
+  if (ipodWindow) observer.observe(ipodWindow, { attributes: true });
+}, 1000);
 
 // Add CSS for animations
 const style = document.createElement('style');
